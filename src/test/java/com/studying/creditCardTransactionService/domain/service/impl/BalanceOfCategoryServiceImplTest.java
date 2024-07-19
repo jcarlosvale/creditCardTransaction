@@ -2,7 +2,9 @@ package com.studying.creditCardTransactionService.domain.service.impl;
 
 import com.studying.creditCardTransactionService.domain.model.BalanceOfCategory;
 import com.studying.creditCardTransactionService.domain.model.Category;
+import com.studying.creditCardTransactionService.domain.model.CategoryOfMerchant;
 import com.studying.creditCardTransactionService.domain.repository.BalanceOfCategoryRepository;
+import com.studying.creditCardTransactionService.domain.service.CategoryOfMerchantService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +36,9 @@ class BalanceOfCategoryServiceImplTest {
     @Mock
     private BalanceOfCategory balanceOfCategory;
 
+    @Mock
+    private CategoryOfMerchantService categoryOfMerchantService;
+
     @InjectMocks
     private BalanceOfCategoryServiceImpl service;
 
@@ -54,6 +59,28 @@ class BalanceOfCategoryServiceImplTest {
         Assertions.assertThat(actual).isEqualTo(expected);
     }
 
+    @Test
+    void findByMerchantTest() {
+        // given
+        final var accountId = "some account id";
+        final var merchant = "som merchant";
+        final var category = Category.MEAL;
+        final var categoryOfMerchant =
+                CategoryOfMerchant.builder().merchant(merchant).category(category).build();
+        final var categoryOfMerchantOptional = Optional.of(categoryOfMerchant);
+        final var expected = Optional.of(balanceOfCategory);
+
+        given(categoryOfMerchantService.findByMerchant(merchant))
+                .willReturn(categoryOfMerchantOptional);
+        given(repository.findBalanceOfCategoryByAccountIdAndCategory(accountId, category))
+                .willReturn(expected);
+
+        // when
+        final var actual = service.findByMerchant(accountId, merchant);
+
+        // then
+        Assertions.assertThat(actual).isEqualTo(expected);
+    }
 
     @Test
     void debitNotAllowedTest() {

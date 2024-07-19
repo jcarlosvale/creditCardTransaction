@@ -4,6 +4,7 @@ import com.studying.creditCardTransactionService.domain.model.BalanceOfCategory;
 import com.studying.creditCardTransactionService.domain.model.Category;
 import com.studying.creditCardTransactionService.domain.repository.BalanceOfCategoryRepository;
 import com.studying.creditCardTransactionService.domain.service.BalanceOfCategoryService;
+import com.studying.creditCardTransactionService.domain.service.CategoryOfMerchantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.Optional;
 public class BalanceOfCategoryServiceImpl implements BalanceOfCategoryService {
 
     private final BalanceOfCategoryRepository balanceOfCategoryRepository;
+    private final CategoryOfMerchantService categoryOfMerchantService;
 
     @Override
     public Optional<BalanceOfCategory> findByAccountAndMCC(final String accountId, final String mcc) {
@@ -43,5 +45,20 @@ public class BalanceOfCategoryServiceImpl implements BalanceOfCategoryService {
         Objects.requireNonNull(accountId, "acocuntId must not be null");
         Objects.requireNonNull(accountId, "category must not be null");
         return balanceOfCategoryRepository.findBalanceOfCategoryByAccountIdAndCategory(accountId, category);
+    }
+
+    @Override
+    public Optional<BalanceOfCategory> findByMerchant(final String accountId, final String merchant) {
+
+        Objects.requireNonNull(accountId, "acocuntId must not be null");
+        Objects.requireNonNull(merchant, "merchant must not be null");
+
+        final var categoryOptional = categoryOfMerchantService.findByMerchant(merchant);
+
+        if(categoryOptional.isEmpty()) {
+             return Optional.empty();
+        } else {
+            return findByAccountAndCategory(accountId, categoryOptional.get().getCategory());
+        }
     }
 }

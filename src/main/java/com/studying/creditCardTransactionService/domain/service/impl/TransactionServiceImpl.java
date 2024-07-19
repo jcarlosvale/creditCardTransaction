@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -43,7 +44,7 @@ public class TransactionServiceImpl implements TransactionService {
         final var accountId = transactionDto.accountId();
         final var mcc = transactionDto.mcc();
         final var amount = transactionDto.amount();
-        final var balanceOfCategoryOptional = balanceOfCategoryService.findByAccountAndMCC(accountId, mcc);
+        final var balanceOfCategoryOptional = findBalanceOfCategory(transactionDto);
         final var balanceOfCategoryFallbackOptional = balanceOfCategoryService.findByAccountAndCategory(accountId, Category.CASH);
         if (balanceOfCategoryOptional.isEmpty() && balanceOfCategoryFallbackOptional.isEmpty()) {
             log.info("balanceOfCategory not found [accountId=%s, mcc=%s]".formatted(accountId, mcc));
@@ -52,6 +53,21 @@ public class TransactionServiceImpl implements TransactionService {
             final var balanceOfCategory = balanceOfCategoryOptional.get();
             final var balanceOfCategoryFallback = balanceOfCategoryFallbackOptional.get();
             return persistTransactionAndNewBalance(transactionDto, balanceOfCategory, balanceOfCategoryFallback, amount);
+        }
+    }
+
+    private Optional<BalanceOfCategory> findBalanceOfCategory(final CreditTransactionDto transactionDto) {
+
+        final var merchant = transactionDto.merchant();
+        final var accountId = transactionDto.accountId();
+        final var mcc = transactionDto.mcc();
+
+        final var balanceOfCategoryByMerchantOptional = balanceOfCategoryService.findByMerchant(accountId, merchant);
+
+        if(balanceOfCategoryByMerchantOptional.isEmpty()) {
+            return balanceOfCategoryService.findByAccountAndMCC(accountId, mcc);
+        } else {
+            return balanceOfCategoryByMerchantOptional;
         }
     }
 

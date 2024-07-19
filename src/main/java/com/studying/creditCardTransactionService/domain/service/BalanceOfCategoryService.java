@@ -11,4 +11,6 @@ public interface BalanceOfCategoryService {
     boolean debit(BalanceOfCategory balanceOfCategory, BigDecimal amount);
 
     Optional<BalanceOfCategory> findByAccountAndCategory(String accountId, Category category);
+
+    Optional<BalanceOfCategory> findByMerchant(String accountId, String merchant);
 }

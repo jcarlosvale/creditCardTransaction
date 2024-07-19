@@ -2,8 +2,10 @@ package com.studying.creditCardTransactionService.view.rs;
 
 import com.studying.creditCardTransactionService.domain.model.BalanceOfCategory;
 import com.studying.creditCardTransactionService.domain.model.Category;
+import com.studying.creditCardTransactionService.domain.model.CategoryOfMerchant;
 import com.studying.creditCardTransactionService.domain.model.CreditCardTransaction;
 import com.studying.creditCardTransactionService.domain.repository.BalanceOfCategoryRepository;
+import com.studying.creditCardTransactionService.domain.repository.CategoryOfMerchantRepository;
 import com.studying.creditCardTransactionService.domain.repository.CreditCardTransactionRepository;
 import com.studying.creditCardTransactionService.view.dto.CreditCardTransactionRequestDto;
 import com.studying.creditCardTransactionService.view.dto.CreditCardTransactionResponseDto;
@@ -28,6 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CreditCardTransactionControllerITTest {
+
+    public static final String MERCHANT = "some stored merchant";
+
 
     public static final String ACCOUNT_ID_1 = "account id 1";
     public static final String ACCOUNT_ID_2 = "account id 2";
@@ -57,6 +62,9 @@ class CreditCardTransactionControllerITTest {
     @Autowired
     private BalanceOfCategoryRepository balanceOfCategoryRepository;
 
+    @Autowired
+    private CategoryOfMerchantRepository categoryOfMerchantRepository;
+
     private String URL;
 
     @BeforeEach
@@ -85,12 +93,21 @@ class CreditCardTransactionControllerITTest {
                         .build();
 
         creditCardTransactionRepository.save(simpleTransaction);
+
+        final var categoryOfMerchant = CategoryOfMerchant.builder()
+                .id(UUID.randomUUID())
+                .merchant(MERCHANT)
+                .category(Category.FOOD)
+                .build();
+
+        categoryOfMerchantRepository.save(categoryOfMerchant);
     }
 
     @AfterEach
     void tearDown() {
         creditCardTransactionRepository.deleteAll(creditCardTransactionRepository.findAll());
         balanceOfCategoryRepository.deleteAll(balanceOfCategoryRepository.findAll());
+        categoryOfMerchantRepository.deleteAll(categoryOfMerchantRepository.findAll());
     }
 
     @Test
@@ -285,6 +302,38 @@ class CreditCardTransactionControllerITTest {
 
         // verify database
         assertThat(creditCardTransactionRepository.count()).isEqualTo(previousTransactionsCount);
+    }
+
+    @Test
+    void registerTransactionByMerchantApprovedTest() {
+        //GIVEN
+        final var previousTransactionsCount = creditCardTransactionRepository.count();
+        final var creditCardTransactionRequestDto = CreditCardTransactionRequestDto.builder()
+                .id(UUID.randomUUID())
+                .accountId(ACCOUNT_ID_1)
+                .amount(new BigDecimal("0.01"))
+                .merchant(MERCHANT)
+                .mcc("0000")
+                .build();
+        final var version = balanceOfCategoryRepository.findById(FOOD_ID).get().getVersion();
+
+        //WHEN
+        final var response = restTemplate.postForEntity(URL, creditCardTransactionRequestDto,
+                                                        CreditCardTransactionResponseDto.class);
+
+        //THEN
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // verify dto
+        final var body = Objects.requireNonNull(response.getBody());
+        assertThat(body.id()).isEqualTo(creditCardTransactionRequestDto.id());
+        assertThat(body.code()).isEqualTo(APROVADA.getCode());
+
+        // verify database
+        assertThat(creditCardTransactionRepository.count()).isEqualTo(previousTransactionsCount + 1);
+        final var entity =  balanceOfCategoryRepository.findById(FOOD_ID).orElseThrow();
+        assertThat(entity.getAmount()).isEqualTo(new BigDecimal("0.99"));
+        assertThat(entity.getVersion()).isEqualTo(version + 1);
     }
 
     @Test
