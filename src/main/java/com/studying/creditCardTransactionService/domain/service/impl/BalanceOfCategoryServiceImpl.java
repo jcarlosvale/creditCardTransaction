@@ -22,7 +22,7 @@ public class BalanceOfCategoryServiceImpl implements BalanceOfCategoryService {
         Objects.requireNonNull(accountId, "acocuntId must not be null");
         Objects.requireNonNull(accountId, "mcc must not be null");
         final var category = Category.fromMCC(mcc);
-        return balanceOfCategoryRepository.findBalanceOfCategoryByAccountIdAndCategory(accountId, category);
+        return findByAccountAndCategory(accountId, category);
     }
 
     @Override
@@ -36,5 +36,12 @@ public class BalanceOfCategoryServiceImpl implements BalanceOfCategoryService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Optional<BalanceOfCategory> findByAccountAndCategory(final String accountId, final Category category) {
+        Objects.requireNonNull(accountId, "acocuntId must not be null");
+        Objects.requireNonNull(accountId, "category must not be null");
+        return balanceOfCategoryRepository.findBalanceOfCategoryByAccountIdAndCategory(accountId, category);
     }
 }

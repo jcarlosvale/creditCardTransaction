@@ -2,6 +2,7 @@ package com.studying.creditCardTransactionService.domain.service.impl;
 
 import com.studying.creditCardTransactionService.domain.dto.CreditTransactionDto;
 import com.studying.creditCardTransactionService.domain.model.BalanceOfCategory;
+import com.studying.creditCardTransactionService.domain.model.Category;
 import com.studying.creditCardTransactionService.domain.model.CreditCardTransaction;
 import com.studying.creditCardTransactionService.domain.model.TransactionStatus;
 import com.studying.creditCardTransactionService.domain.repository.CreditCardTransactionRepository;
@@ -55,13 +56,24 @@ class TransactionServiceImplTest {
         final var expectedCreditCardTransaction = transactionDto.toCreditCardTransaction(balanceOfCategory);
         final Optional<BalanceOfCategory> balanceOfCategoryOptional = Optional.of(balanceOfCategory);
 
+        final BalanceOfCategory balanceOfCategoryFallback =
+                BalanceOfCategory.builder()
+                        .id(UUID.randomUUID())
+                        .build();
+        final Optional<BalanceOfCategory> balanceOfCategoryFallBackOptional = Optional.of(balanceOfCategoryFallback);
+
         given(repository.existsById(transactionDto.id()))
                 .willReturn(false);
+
         given(balanceOfCategoryService
                       .findByAccountAndMCC(transactionDto.accountId(), transactionDto.mcc()))
                 .willReturn(balanceOfCategoryOptional);
         given(balanceOfCategoryService.debit(balanceOfCategory,transactionDto.amount()))
                 .willReturn(isDebitAllowed);
+
+        given(balanceOfCategoryService
+                      .findByAccountAndCategory(transactionDto.accountId(), Category.CASH))
+                .willReturn(balanceOfCategoryFallBackOptional);
 
         // when
         final var actual = service.registerTransaction(transactionDto);
@@ -89,12 +101,25 @@ class TransactionServiceImplTest {
                         .build();
         final Optional<BalanceOfCategory> balanceOfCategoryOptional = Optional.of(balanceOfCategory);
 
+        final BalanceOfCategory balanceOfCategoryFallback =
+                BalanceOfCategory.builder()
+                        .id(UUID.randomUUID())
+                        .build();
+        final Optional<BalanceOfCategory> balanceOfCategoryFallBackOptional = Optional.of(balanceOfCategoryFallback);
+
         given(repository.existsById(transactionDto.id()))
                 .willReturn(false);
+
         given(balanceOfCategoryService
                       .findByAccountAndMCC(transactionDto.accountId(), transactionDto.mcc()))
                 .willReturn(balanceOfCategoryOptional);
         given(balanceOfCategoryService.debit(balanceOfCategory,transactionDto.amount()))
+                .willReturn(isDebitAllowed);
+
+        given(balanceOfCategoryService
+                      .findByAccountAndCategory(transactionDto.accountId(), Category.CASH))
+                .willReturn(balanceOfCategoryFallBackOptional);
+        given(balanceOfCategoryService.debit(balanceOfCategoryFallback,transactionDto.amount()))
                 .willReturn(isDebitAllowed);
 
         // when
@@ -173,6 +198,12 @@ class TransactionServiceImplTest {
         final var expectedCreditCardTransaction = transactionDto.toCreditCardTransaction(balanceOfCategory);
         final Optional<BalanceOfCategory> balanceOfCategoryOptional = Optional.of(balanceOfCategory);
 
+        final BalanceOfCategory balanceOfCategoryFallback =
+                BalanceOfCategory.builder()
+                        .id(UUID.randomUUID())
+                        .build();
+        final Optional<BalanceOfCategory> balanceOfCategoryFallBackOptional = Optional.of(balanceOfCategoryFallback);
+
         given(repository.existsById(transactionDto.id()))
                 .willReturn(false);
         given(balanceOfCategoryService
@@ -182,6 +213,9 @@ class TransactionServiceImplTest {
                 .willReturn(isDebitAllowed);
         given(repository.save(expectedCreditCardTransaction)).willThrow(new OptimisticLockingFailureException(""));
 
+        given(balanceOfCategoryService
+                      .findByAccountAndCategory(transactionDto.accountId(), Category.CASH))
+                .willReturn(balanceOfCategoryFallBackOptional);
         // when
         final var actual = service.registerTransaction(transactionDto);
 

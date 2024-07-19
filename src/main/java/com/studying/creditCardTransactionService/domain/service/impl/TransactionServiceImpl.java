@@ -2,6 +2,7 @@ package com.studying.creditCardTransactionService.domain.service.impl;
 
 import com.studying.creditCardTransactionService.domain.dto.CreditTransactionDto;
 import com.studying.creditCardTransactionService.domain.model.BalanceOfCategory;
+import com.studying.creditCardTransactionService.domain.model.Category;
 import com.studying.creditCardTransactionService.domain.model.TransactionStatus;
 import com.studying.creditCardTransactionService.domain.repository.CreditCardTransactionRepository;
 import com.studying.creditCardTransactionService.domain.service.BalanceOfCategoryService;
@@ -26,7 +27,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public TransactionStatus registerTransaction(final CreditTransactionDto transactionDto) {
         Objects.requireNonNull(transactionDto, "transactionDto must not be null");
-        if(isNewTransaction(transactionDto)) {
+        if (isNewTransaction(transactionDto)) {
             return processTransaction(transactionDto);
         } else {
             log.error("It is not a new transaction [id=%s]".formatted(transactionDto));
@@ -43,23 +44,28 @@ public class TransactionServiceImpl implements TransactionService {
         final var mcc = transactionDto.mcc();
         final var amount = transactionDto.amount();
         final var balanceOfCategoryOptional = balanceOfCategoryService.findByAccountAndMCC(accountId, mcc);
-        if (balanceOfCategoryOptional.isEmpty()) {
+        final var balanceOfCategoryFallbackOptional = balanceOfCategoryService.findByAccountAndCategory(accountId, Category.CASH);
+        if (balanceOfCategoryOptional.isEmpty() && balanceOfCategoryFallbackOptional.isEmpty()) {
             log.info("balanceOfCategory not found [accountId=%s, mcc=%s]".formatted(accountId, mcc));
             return TransactionStatus.ERRO;
         } else {
             final var balanceOfCategory = balanceOfCategoryOptional.get();
-            return persistTransactionAndNewBalance(transactionDto, balanceOfCategory, amount);
+            final var balanceOfCategoryFallback = balanceOfCategoryFallbackOptional.get();
+            return persistTransactionAndNewBalance(transactionDto, balanceOfCategory, balanceOfCategoryFallback, amount);
         }
     }
 
     @Transactional
-    protected TransactionStatus persistTransactionAndNewBalance(final CreditTransactionDto transactionDto,
-                                                                final BalanceOfCategory balanceOfCategory,
-                                                                final BigDecimal amount) {
+    protected TransactionStatus persistTransactionAndNewBalance(
+            final CreditTransactionDto transactionDto, final BalanceOfCategory balanceOfCategory,
+            final BalanceOfCategory balanceOfCategoryFallback, final BigDecimal amount) {
         try {
-            if (balanceOfCategoryService.debit(balanceOfCategory, amount)) {
+            if (balanceOfCategoryService.debit(balanceOfCategory, amount) ||
+                    balanceOfCategoryService.debit(balanceOfCategoryFallback, amount)) {
+
                 repository.save(transactionDto.toCreditCardTransaction(balanceOfCategory));
                 return TransactionStatus.APROVADA;
+
             } else {
                 return TransactionStatus.REJEITADA;
             }

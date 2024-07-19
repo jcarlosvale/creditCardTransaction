@@ -132,9 +132,9 @@ class CreditCardTransactionControllerITTest {
         final var creditCardTransactionRequestDto = CreditCardTransactionRequestDto.builder()
                 .id(UUID.randomUUID())
                 .accountId(ACCOUNT_ID_1)
-                .amount(new BigDecimal("10.01"))
+                .amount(new BigDecimal("100.01"))
                 .merchant("some merchant")
-                .mcc(MEAL_MCC)
+                .mcc("9999")
                 .build();
         final var version = balanceOfCategoryRepository.findById(MEAL_ID).get().getVersion();
 
@@ -155,6 +155,80 @@ class CreditCardTransactionControllerITTest {
         final var entity =  balanceOfCategoryRepository.findById(MEAL_ID).orElseThrow();
         assertThat(entity.getAmount()).isEqualTo(MEAL_AMOUNT);
         assertThat(entity.getVersion()).isEqualTo(version);
+    }
+
+    @Test
+    void registerTransactionFallbackApprovedTest() {
+        //GIVEN
+        final var previousTransactionsCount = creditCardTransactionRepository.count();
+        final var creditCardTransactionRequestDto = CreditCardTransactionRequestDto.builder()
+                .id(UUID.randomUUID())
+                .accountId(ACCOUNT_ID_1)
+                .amount(new BigDecimal("10.01"))
+                .merchant("some merchant")
+                .mcc(MEAL_MCC)
+                .build();
+        final var mealVersion = balanceOfCategoryRepository.findById(MEAL_ID).get().getVersion();
+        final var cashVersion = balanceOfCategoryRepository.findById(CASH_ID).get().getVersion();
+
+        //WHEN
+        final var response = restTemplate.postForEntity(URL, creditCardTransactionRequestDto,
+                                                        CreditCardTransactionResponseDto.class);
+
+        //THEN
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // verify dto
+        final var body = Objects.requireNonNull(response.getBody());
+        assertThat(body.id()).isEqualTo(creditCardTransactionRequestDto.id());
+        assertThat(body.code()).isEqualTo(APROVADA.getCode());
+
+        // verify database
+        assertThat(creditCardTransactionRepository.count()).isEqualTo(previousTransactionsCount+1);
+        final var mealEntity =  balanceOfCategoryRepository.findById(MEAL_ID).orElseThrow();
+        assertThat(mealEntity.getAmount()).isEqualTo(MEAL_AMOUNT);
+        assertThat(mealEntity.getVersion()).isEqualTo(mealVersion);
+
+        final var cashEntity =  balanceOfCategoryRepository.findById(CASH_ID).orElseThrow();
+        assertThat(cashEntity.getAmount()).isEqualTo(new BigDecimal("89.99"));
+        assertThat(cashEntity.getVersion()).isEqualTo(cashVersion+1);
+    }
+
+    @Test
+    void registerTransactionFallbackRejectedTest() {
+        //GIVEN
+        final var previousTransactionsCount = creditCardTransactionRepository.count();
+        final var creditCardTransactionRequestDto = CreditCardTransactionRequestDto.builder()
+                .id(UUID.randomUUID())
+                .accountId(ACCOUNT_ID_1)
+                .amount(new BigDecimal("100.01"))
+                .merchant("some merchant")
+                .mcc(MEAL_MCC)
+                .build();
+        final var mealVersion = balanceOfCategoryRepository.findById(MEAL_ID).get().getVersion();
+        final var cashVersion = balanceOfCategoryRepository.findById(CASH_ID).get().getVersion();
+
+        //WHEN
+        final var response = restTemplate.postForEntity(URL, creditCardTransactionRequestDto,
+                                                        CreditCardTransactionResponseDto.class);
+
+        //THEN
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // verify dto
+        final var body = Objects.requireNonNull(response.getBody());
+        assertThat(body.id()).isEqualTo(creditCardTransactionRequestDto.id());
+        assertThat(body.code()).isEqualTo(REJEITADA.getCode());
+
+        // verify database
+        assertThat(creditCardTransactionRepository.count()).isEqualTo(previousTransactionsCount);
+        final var mealEntity =  balanceOfCategoryRepository.findById(MEAL_ID).orElseThrow();
+        assertThat(mealEntity.getAmount()).isEqualTo(MEAL_AMOUNT);
+        assertThat(mealEntity.getVersion()).isEqualTo(mealVersion);
+
+        final var cashEntity =  balanceOfCategoryRepository.findById(CASH_ID).orElseThrow();
+        assertThat(cashEntity.getAmount()).isEqualTo(CASH_AMOUNT);
+        assertThat(cashEntity.getVersion()).isEqualTo(cashVersion);
     }
 
     @Test
