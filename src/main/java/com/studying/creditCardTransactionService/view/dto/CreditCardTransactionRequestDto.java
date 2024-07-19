@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public record CreditCardTransactionRequestDto(@NotNull(message = "id should not be null")
                                               UUID id,
-                                              @NotNull(message = "accountId should not be null")
+                                              @NotBlank(message = "accountId should not be null or blank")
                                               String accountId,
                                               @DecimalMin(value = "0.00", inclusive = false,
                                                       message = "amount should be positive")
@@ -21,6 +21,7 @@ public record CreditCardTransactionRequestDto(@NotNull(message = "id should not 
                                               BigDecimal amount,
                                               @NotBlank(message = "merchant should not be blank")
                                               String merchant,
+                                              @NotBlank(message = "mcc should not be blank")
                                               @Pattern(regexp = "\\d{4}", message = "mcc should be a 4 digits string")
                                               String mcc) {
 }

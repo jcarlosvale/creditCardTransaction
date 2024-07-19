@@ -2,8 +2,9 @@ package com.studying.creditCardTransactionService.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreditCardTransaction {
+public class BalanceOfCategory {
 
     @Id
     private UUID id;
@@ -26,12 +27,10 @@ public class CreditCardTransaction {
     private String accountId;
 
     @Column(nullable = false)
-    private BigDecimal amount;
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
     @Column(nullable = false)
-    private String merchant;
-
-    @ManyToOne(optional = false)
-    private BalanceOfCategory balance;
+    private BigDecimal amount;
 
 }
