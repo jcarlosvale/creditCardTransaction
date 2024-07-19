@@ -1,14 +1,17 @@
 package com.studying.creditCardTransactionService.view.dto;
 
+import com.studying.creditCardTransactionService.domain.dto.CreditTransactionDto;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Builder
 public record CreditCardTransactionRequestDto(@NotNull(message = "id should not be null")
                                               UUID id,
                                               @NotBlank(message = "accountId should not be null or blank")
@@ -24,4 +27,8 @@ public record CreditCardTransactionRequestDto(@NotNull(message = "id should not 
                                               @NotBlank(message = "mcc should not be blank")
                                               @Pattern(regexp = "\\d{4}", message = "mcc should be a 4 digits string")
                                               String mcc) {
+
+    public CreditTransactionDto toCreditTransactionDto() {
+        return new CreditTransactionDto(id, accountId, amount, merchant, mcc);
+    }
 }

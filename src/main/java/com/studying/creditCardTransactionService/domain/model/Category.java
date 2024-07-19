@@ -21,15 +21,15 @@ public enum Category {
                         );
     }
 
-    Category(final String ... codes) {
+    Category(final String ... mccs) {
         this.codes = new HashSet<>();
-        if (Objects.nonNull(codes)) {
-            this.codes.addAll(Arrays.asList(codes));
+        if (Objects.nonNull(mccs)) {
+            this.codes.addAll(Arrays.asList(mccs));
         }
     }
 
-    public static Category fromCode(final String code) {
-        Objects.requireNonNull(code, "code must not be null");
-        return mapMCC.getOrDefault(code, CASH);
+    public static Category fromMCC(final String mcc) {
+        Objects.requireNonNull(mcc, "mcc must not be null");
+        return mapMCC.getOrDefault(mcc, CASH);
     }
 }

@@ -11,11 +11,11 @@ class CategoryTest {
 
     @ParameterizedTest
     @MethodSource("mccArguments")
-    void fromCodeTest(final String code, final Category expected) {
+    void fromMCCTest(final String code, final Category expected) {
         // given
 
         // when
-        final var actual = Category.fromCode(code);
+        final var actual = Category.fromMCC(code);
 
         // then
         Assertions.assertThat(actual).isEqualTo(expected);

@@ -1,7 +1,8 @@
 package com.studying.creditCardTransactionService.domain.service;
 
-import com.studying.creditCardTransactionService.domain.model.CreditCardTransaction;
+import com.studying.creditCardTransactionService.domain.dto.CreditTransactionDto;
+import com.studying.creditCardTransactionService.domain.model.TransactionStatus;
 
 public interface TransactionService {
-    String register(CreditCardTransaction transaction);
+    TransactionStatus registerTransaction(CreditTransactionDto transactionDto);
 }

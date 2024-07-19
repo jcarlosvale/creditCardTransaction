@@ -1,5 +1,6 @@
 package com.studying.creditCardTransactionService.view.dto;
 
+import com.studying.creditCardTransactionService.domain.dto.CreditTransactionDto;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -43,6 +44,19 @@ class CreditCardTransactionRequestDtoTest {
         assertThat(dto.amount()).isEqualTo(AMOUNT);
         assertThat(dto.merchant()).isEqualTo(MERCHANT);
         assertThat(dto.mcc()).isEqualTo(MCC);
+    }
+
+    @Test
+    void toCreditTransactionDtoTest() {
+        // given
+        var expected = new CreditTransactionDto(ID, ACCOUNT_ID, AMOUNT, MERCHANT, MCC);
+        var dto = new CreditCardTransactionRequestDto(ID, ACCOUNT_ID, AMOUNT, MERCHANT, MCC);
+
+        // when
+        var actual = dto.toCreditTransactionDto();
+
+        // then
+        assertThat(actual).isEqualTo(expected);
     }
 
     @ParameterizedTest

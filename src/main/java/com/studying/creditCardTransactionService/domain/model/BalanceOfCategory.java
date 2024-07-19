@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,4 +34,10 @@ public class BalanceOfCategory {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Version
+    private Integer version;
+
+    public boolean hasBalance(final BigDecimal amount) {
+        return this.amount.compareTo(amount) >= 0;
+    }
 }
